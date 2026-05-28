@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 import java.util.List;
 import java.util.Scanner;

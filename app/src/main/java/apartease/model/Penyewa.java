@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 import java.util.ArrayList;
 import java.util.List;

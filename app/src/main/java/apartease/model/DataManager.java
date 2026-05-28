@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 import apartease.db.AdminDAO;
 import apartease.db.BookingDAO;

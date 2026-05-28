@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 public class Booking {
     private static int counter = 1;

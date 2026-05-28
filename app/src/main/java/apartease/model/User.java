@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 public abstract class User {
     private String nama;
