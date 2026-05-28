@@ -22,6 +22,21 @@ public class Booking {
         this.statusPembayaran = "Belum Lunas";
     }
 
+    public Booking(String idBooking, String usernamePenyewa, String kodeUnit, String tipeUnit, String durasiTipe, int jumlahDurasi, long totalHarga, String statusPembayaran) {
+        this.idBooking = idBooking;
+        this.usernamePernyewa = usernamePenyewa;
+        this.kodeUnit = kodeUnit;
+        this.tipeUnit = tipeUnit;
+        this.durasiTipe = durasiTipe;
+        this.jumlahDurasi = jumlahDurasi;
+        this.totalHarga = totalHarga;
+        this.statusPembayaran = statusPembayaran;
+    }
+
+    public static void setCounter(int nilai) {
+        counter = nilai;
+    }
+
     public String getIdBooking() { return idBooking; }
     public String getUsernamePenyewa() { return usernamePernyewa; }
     public String getKodeUnit() { return kodeUnit; }
