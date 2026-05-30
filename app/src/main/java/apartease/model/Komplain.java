@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 public class Komplain {
     private static int counter = 1;
@@ -16,6 +16,19 @@ public class Komplain {
         this.isiKomplain = isiKomplain;
         this.balasanAdmin = "-";
         this.status = "Menunggu";
+    }
+
+    public Komplain(String idKomplain, String usernamePenyewa, String kodeUnit, String isiKomplain, String balasanAdmin, String status) {
+        this.idKomplain = idKomplain;
+        this.usernamePenyewa = usernamePenyewa;
+        this.kodeUnit = kodeUnit;
+        this.isiKomplain = isiKomplain;
+        this.balasanAdmin = balasanAdmin;
+        this.status = status;
+    }
+
+    public static void setCounter(int nilai) {
+        counter = nilai;
     }
 
     public String getIdKomplain() { return idKomplain; }

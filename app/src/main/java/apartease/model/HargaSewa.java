@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 public class HargaSewa {
     private long studioHarian;

@@ -4,6 +4,9 @@
 package apartease;
 
 import org.junit.jupiter.api.Test;
+
+import apartease.model.App;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AppTest {

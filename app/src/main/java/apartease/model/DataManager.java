@@ -1,4 +1,11 @@
-package apartease;
+package apartease.model;
+
+import apartease.db.AdminDAO;
+import apartease.db.BookingDAO;
+import apartease.db.Database;
+import apartease.db.KomplainDAO;
+import apartease.db.PenyewaDAO;
+import apartease.db.UnitApartemenDAO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,18 +18,41 @@ public class DataManager {
     private List<Komplain> daftarKomplain;
     private HargaSewa hargaSewa;
 
+    private AdminDAO adminDAO = new AdminDAO();
+    private PenyewaDAO penyewaDAO = new PenyewaDAO();
+    private UnitApartemenDAO unitDAO = new UnitApartemenDAO();
+    private BookingDAO bookingDAO = new BookingDAO();
+    private KomplainDAO komplainDAO = new KomplainDAO();
+
     public DataManager() {
-    daftarAdmin = new ArrayList<>();
-    daftarPenyewa = new ArrayList<>();
-    daftarBooking = new ArrayList<>();
-    daftarKomplain = new ArrayList<>();
-    hargaSewa = new HargaSewa();
-    daftarUnit = inisialisasiUnit();
+        Database.inisialisasi();
+        hargaSewa = new HargaSewa();
+        muatSemuaData();
+    }
 
-    daftarAdmin.add(new Admin("Administrator", "admin", "admin123", "admin@gmail.com", "08000000000"));
-    }      
+    private void muatSemuaData() {
+        daftarAdmin = adminDAO.ambilSemua();
+        if (daftarAdmin.isEmpty()) {
+            Admin def = new Admin("Administrator", "admin", "admin123", "admin@gmail.com", "08000000000");
+            adminDAO.simpan(def);
+            daftarAdmin.add(def);
+        }
 
-    private List<UnitApartemen> inisialisasiUnit() {
+        if (unitDAO.jumlahUnit() == 0) {
+            List<UnitApartemen> baru = generateUnit();
+            unitDAO.simpanSemua(baru);
+        }
+        daftarUnit = unitDAO.ambilSemua();
+
+        daftarPenyewa = penyewaDAO.ambilSemua();
+        daftarBooking = bookingDAO.ambilSemua();
+        daftarKomplain = komplainDAO.ambilSemua();
+
+        Booking.setCounter(nomorTerakhir(daftarBooking, true) + 1);
+        Komplain.setCounter(nomorTerakhir(daftarKomplain, false) + 1);
+    }
+
+    private List<UnitApartemen> generateUnit() {
         List<UnitApartemen> units = new ArrayList<>();
         for (int lantai = 2; lantai <= 20; lantai++) {
             for (char huruf = 'A'; huruf <= 'Z'; huruf++) {
@@ -30,6 +60,19 @@ public class DataManager {
             }
         }
         return units;
+    }
+
+    private int nomorTerakhir(List<?> daftar, boolean booking) {
+        int maks = 0;
+        for (Object o : daftar) {
+            String id = booking ? ((Booking) o).getIdBooking() : ((Komplain) o).getIdKomplain();
+            try {
+                int n = Integer.parseInt(id.substring(2));
+                if (n > maks) maks = n;
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return maks;
     }
 
     public List<Admin> getDaftarAdmin() { return daftarAdmin; }
@@ -105,5 +148,41 @@ public class DataManager {
             if (p.getUsername().equals(username)) return p;
         }
         return null;
+    }
+
+    public void simpanAdminBaru(Admin admin) {
+        daftarAdmin.add(admin);
+        adminDAO.simpan(admin);
+    }
+
+    public void simpanPenyewaBaru(Penyewa penyewa) {
+        daftarPenyewa.add(penyewa);
+        penyewaDAO.simpan(penyewa);
+    }
+
+    public void simpanBookingBaru(Booking booking) {
+        daftarBooking.add(booking);
+        bookingDAO.simpan(booking);
+    }
+
+    public void simpanKomplainBaru(Komplain komplain) {
+        daftarKomplain.add(komplain);
+        komplainDAO.simpan(komplain);
+    }
+
+    public void updateAdmin(Admin admin)       { adminDAO.simpan(admin); }
+    public void updatePenyewa(Penyewa penyewa) { penyewaDAO.simpan(penyewa); }
+    public void updateUnit(UnitApartemen unit) { unitDAO.simpan(unit); }
+    public void updateBooking(Booking booking) { bookingDAO.simpan(booking); }
+    public void updateKomplain(Komplain komplain) { komplainDAO.simpan(komplain); }
+
+    public void tambahNotifikasi(Penyewa penyewa, String pesan) {
+        penyewa.tambahNotifikasi(pesan);
+        penyewaDAO.tambahNotifikasi(penyewa.getUsername(), pesan);
+    }
+
+    public void tambahRiwayat(Penyewa penyewa, String isi) {
+        penyewa.tambahRiwayat(isi);
+        penyewaDAO.tambahRiwayat(penyewa.getUsername(), isi);
     }
 }

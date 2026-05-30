@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -32,14 +32,33 @@ public class Booking {
         this.tanggalKeluar = hitungTanggalKeluar(tanggalMasuk, durasiTipe, jumlahDurasi);
     }
 
+    public Booking(String idBooking, String usernamePenyewa, String kodeUnit, String tipeUnit,
+                   String durasiTipe, int jumlahDurasi, long totalHarga, String statusPembayaran,
+                   LocalDate tanggalMasuk, LocalDate tanggalKeluar) {
+        this.idBooking = idBooking;
+        this.usernamePernyewa = usernamePenyewa;
+        this.kodeUnit = kodeUnit;
+        this.tipeUnit = tipeUnit;
+        this.durasiTipe = durasiTipe;
+        this.jumlahDurasi = jumlahDurasi;
+        this.totalHarga = totalHarga;
+        this.statusPembayaran = statusPembayaran;
+        this.tanggalMasuk = tanggalMasuk;
+        this.tanggalKeluar = tanggalKeluar;
+    }
+
     private LocalDate hitungTanggalKeluar(LocalDate masuk, String tipe, int jumlah) {
         switch (tipe.toLowerCase()) {
-            case "harian"       : return masuk.plusDays(jumlah);
-            case "mingguan"     : return masuk.plusWeeks(jumlah);
-            case "bulanan"      : return masuk.plusMonths(jumlah);
-            case "tahunan"      : return masuk.plusYears(jumlah);
-            default             : return masuk;
+            case "harian"   : return masuk.plusDays(jumlah);
+            case "mingguan" : return masuk.plusWeeks(jumlah);
+            case "bulanan"  : return masuk.plusMonths(jumlah);
+            case "tahunan"  : return masuk.plusYears(jumlah);
+            default         : return masuk;
         }
+    }
+
+    public static void setCounter(int nilai) {
+        counter = nilai;
     }
 
     public String getIdBooking() { return idBooking; }
@@ -51,7 +70,7 @@ public class Booking {
     public long getTotalHarga() { return totalHarga; }
     public String getStatusPembayaran() { return statusPembayaran; }
     public void setStatusPembayaran(String status) { this.statusPembayaran = status; }
-    public LocalDate getTanggalMasuk() {return tanggalMasuk; }
+    public LocalDate getTanggalMasuk() { return tanggalMasuk; }
     public LocalDate getTanggalKeluar() { return tanggalKeluar; }
 
     public String getTanggalMasukStr()  { return tanggalMasuk.format(FMT); }

@@ -1,4 +1,4 @@
-package apartease;
+package apartease.model;
 
 public class UnitApartemen {
     private int lantai;
