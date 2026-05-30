@@ -7,54 +7,70 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
+/**
+ * Halaman pembuka: memilih masuk sebagai Admin atau Penyewa.
+ */
 public class WelcomeView extends VBox {
     public Button adminRoleBtn;
     public Button penyewaRoleBtn;
     public Button keluarBtn;
 
     public WelcomeView() {
-        this.setSpacing(25);
-        this.setPadding(new Insets(40));
+        this.setSpacing(28);
+        this.setPadding(new Insets(60));
         this.setAlignment(Pos.CENTER);
-        this.setStyle("-fx-background-color: #a2c1ffff;");
+        this.setStyle("-fx-background-color: linear-gradient(to bottom right, "
+                + Theme.BRAND + ", " + Theme.SIDEBAR + ");");
 
-        // Header Menu Utama
-        Label titleLabel = new Label("Selamat Datang di ApartEase");
-        titleLabel.setFont(new Font("Chiller Regular", 32));
-        titleLabel.setStyle("-fx-text-fill: #f9328fff; -fx-font-weight: bold;");
+        Label logo = new Label("ApartEase");
+        logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 48));
+        logo.setStyle("-fx-text-fill: white;");
 
-        Label subtitleLabel = new Label("Silakan pilih jenis pengguna untuk masuk ke sistem:");
-        subtitleLabel.setFont(new Font("Chiller Regular", 16));
-        subtitleLabel.setStyle("-fx-text-fill: #4B5563;");
+        Label subtitle = new Label("Sistem Manajemen Penyewaan Apartemen");
+        subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 16));
+        subtitle.setStyle("-fx-text-fill: #C7D2FE;");
 
-        // Kotak Horizontal untuk Tombol Pilihan Role (UI/UX agar seimbang)
-        HBox roleContainer = new HBox(30);
-        roleContainer.setAlignment(Pos.CENTER);
+        Label prompt = new Label("Masuk sebagai:");
+        prompt.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 15));
+        prompt.setStyle("-fx-text-fill: #E2E8F0; -fx-padding: 20 0 0 0;");
 
-        adminRoleBtn = createRoleButton("👨‍💼 ADMIN", "#5abf5aff"); // Warna Teal Hijau Tua
-        penyewaRoleBtn = createRoleButton("👥 PENYEWA", "#5abf5aff"); // Warna Oranye Terbakar
+        adminRoleBtn   = roleCard("\uD83D\uDC54  Admin", "Kelola unit, penyewa & laporan");
+        penyewaRoleBtn = roleCard("\uD83C\uDFE2  Penyewa", "Pesan unit, bayar sewa & komplain");
 
-        roleContainer.getChildren().addAll(adminRoleBtn, penyewaRoleBtn);
+        HBox roleRow = new HBox(24, adminRoleBtn, penyewaRoleBtn);
+        roleRow.setAlignment(Pos.CENTER);
 
-        // Tombol Keluar Aplikasi di bagian bawah
-        keluarBtn = new Button("❌ Keluar Aplikasi");
-        keluarBtn.setStyle("-fx-background-color: #cb1818ff; -fx-text-fill: white; -fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        keluarBtn = new Button("Keluar Aplikasi");
+        keluarBtn.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 13));
+        String exitStyle = "-fx-background-color: transparent; -fx-text-fill: #CBD5E1;"
+                + " -fx-border-color: #CBD5E1; -fx-border-radius: 8; -fx-background-radius: 8;"
+                + " -fx-padding: 8 18; -fx-cursor: hand;";
+        keluarBtn.setStyle(exitStyle);
 
-        this.getChildren().addAll(titleLabel, subtitleLabel, roleContainer, keluarBtn);
+        this.getChildren().addAll(logo, subtitle, prompt, roleRow, keluarBtn);
     }
 
-    private Button createRoleButton(String text, String colorHex) {
-        Button btn = new Button(text);
-        btn.setPrefSize(150, 50); // Bikin tombol kotak besar yang interaktif
-        btn.setFont(new Font("Segoe UI", 16));
-        btn.setWrapText(true);
-        btn.setStyle("-fx-background-color: " + colorHex + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand; -fx-text-alignment: center;");
-        
-        // Efek Hover UX
-        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: #8cb1ffff; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand; -fx-text-alignment: center;"));
-        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: " + colorHex + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand; -fx-text-alignment: center;"));
-        
+    private Button roleCard(String title, String desc) {
+        VBox content = new VBox(8);
+        content.setAlignment(Pos.CENTER);
+        Label t = new Label(title);
+        t.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        t.setStyle("-fx-text-fill: " + Theme.TEXT_DARK + ";");
+        Label d = new Label(desc);
+        d.setFont(Font.font("Segoe UI", 12));
+        d.setStyle("-fx-text-fill: " + Theme.TEXT_MUTED + ";");
+        content.getChildren().addAll(t, d);
+
+        Button btn = new Button();
+        btn.setGraphic(content);
+        btn.setPrefSize(260, 150);
+        String normal = "-fx-background-color: white; -fx-background-radius: 16; -fx-cursor: hand;";
+        String hover  = "-fx-background-color: #EEF2FF; -fx-background-radius: 16; -fx-cursor: hand;";
+        btn.setStyle(normal);
+        btn.setOnMouseEntered(e -> btn.setStyle(hover));
+        btn.setOnMouseExited(e -> btn.setStyle(normal));
         return btn;
     }
 }

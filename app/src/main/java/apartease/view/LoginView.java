@@ -3,47 +3,84 @@ package apartease.view;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
-public class LoginView extends VBox {
-    // Komponen dijadikan variabel publik agar bisa dideteksi oleh kelas utama nanti
+/**
+ * Halaman login yang dapat dipakai ulang untuk Admin maupun Penyewa.
+ * Tombol "Daftar" hanya ditampilkan bila showRegister = true.
+ */
+public class LoginView extends StackPane {
     public TextField usernameField;
     public PasswordField passwordField;
     public Button loginButton;
+    public Button backButton;
+    public Hyperlink registerLink;   // null jika tidak ditampilkan
+    private final Label lblAlert;
 
-    public LoginView() {
-        // 1. Pengaturan Jarak & Latar Belakang Kontainer (Konsep UX)
-        this.setSpacing(15);
-        this.setPadding(new Insets(30));
-        this.setAlignment(Pos.CENTER);
-        this.setStyle("-fx-background-color: #eeff90ff;"); 
+    public LoginView(String judul, boolean showRegister) {
+        this.setStyle("-fx-background-color: " + Theme.APP_BG + ";");
+        this.setPadding(new Insets(40));
 
-        // 2. Desain Label Judul Aplikasi (Konsep UI)
-        Label titleLabel = new Label("ApartEase Admin");
-        titleLabel.setFont(new Font("Segoe UI", 26));
-        titleLabel.setStyle("-fx-text-fill: #f956c3ff; -fx-font-weight: bold;"); 
+        Label title = new Label(judul);
+        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 24));
+        title.setStyle("-fx-text-fill: " + Theme.TEXT_DARK + ";");
 
-        // 3. Elemen Form Input
+        Label sub = Theme.muted("Masukkan kredensial Anda untuk melanjutkan.");
+
         usernameField = new TextField();
-        usernameField.setPromptText("Masukkan Username Admin");
-        usernameField.setMaxWidth(260);
-        usernameField.setStyle("-fx-background-radius: 5; -fx-padding: 8;");
+        usernameField.setPromptText("Username");
+        styleInput(usernameField);
 
         passwordField = new PasswordField();
-        passwordField.setPromptText("Masukkan Password");
-        passwordField.setMaxWidth(260);
-        passwordField.setStyle("-fx-background-radius: 5; -fx-padding: 8;");
+        passwordField.setPromptText("Password");
+        styleInput(passwordField);
 
-        // 4. Elemen Tombol Aksi
-        loginButton = new Button("Sign In");
-        loginButton.setMaxWidth(260);
-        loginButton.setStyle("-fx-background-color: #fc79dbff; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-padding: 10; -fx-cursor: hand;");
+        lblAlert = new Label();
+        lblAlert.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+        lblAlert.setStyle("-fx-text-fill: " + Theme.DANGER + ";");
+        lblAlert.setWrapText(true);
 
-        // 5. Satukan semua komponen ke dalam susunan Vertikal (VBox)
-        this.getChildren().addAll(titleLabel, usernameField, passwordField, loginButton);
+        loginButton = Theme.primaryButton("Masuk");
+        loginButton.setMaxWidth(Double.MAX_VALUE);
+
+        backButton = Theme.ghostButton("Kembali");
+        backButton.setMaxWidth(Double.MAX_VALUE);
+
+        VBox cardContent = new VBox(14, title, sub, usernameField, passwordField,
+                lblAlert, loginButton, backButton);
+
+        if (showRegister) {
+            registerLink = new Hyperlink("Belum punya akun? Daftar di sini");
+            registerLink.setStyle("-fx-text-fill: " + Theme.BRAND + ";");
+            HBox linkRow = new HBox(registerLink);
+            linkRow.setAlignment(Pos.CENTER);
+            cardContent.getChildren().add(linkRow);
+        }
+
+        VBox card = Theme.card();
+        card.getChildren().setAll(cardContent.getChildren());
+        card.setMaxWidth(360);
+        card.setSpacing(12);
+
+        this.getChildren().add(card);
+        StackPane.setAlignment(card, Pos.CENTER);
+    }
+
+    private void styleInput(TextField tf) {
+        tf.setStyle("-fx-background-radius: 8; -fx-border-color: " + Theme.BORDER
+                + "; -fx-border-radius: 8; -fx-padding: 10; -fx-font-size: 13px;");
+    }
+
+    public void showError(String pesan) {
+        lblAlert.setStyle("-fx-text-fill: " + Theme.DANGER + ";");
+        lblAlert.setText(pesan);
     }
 }

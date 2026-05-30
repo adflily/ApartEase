@@ -1,95 +1,485 @@
 package apartease.view;
 
+import apartease.model.Booking;
+import apartease.model.DataManager;
+import apartease.model.HargaSewa;
+import apartease.model.Komplain;
+import apartease.model.Penyewa;
+import apartease.model.UnitApartemen;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+/**
+ * Dashboard Penyewa. Menyediakan akses ke seluruh layanan penyewa:
+ * cek unit, pesan unit, bayar sewa, status, riwayat, komplain, notifikasi.
+ */
 public class PenyewaDashboardView extends BorderPane {
-    public Button logoutBtn;
-    public Button pesanUnitBtn;
-    public Button bayarSewaBtn;
-    public VBox contentArea;
 
-    public PenyewaDashboardView() {
-        initSidebar();
-        initContentArea();
+    private final DataManager dm;
+    private final Penyewa penyewa;
+    private final Runnable onLogout;
+    private final Label headerTitle = new Label();
 
-        // LOGIKA INTERAKSI MENU PENYEWA
-        pesanUnitBtn.setOnAction(e -> {
-            contentArea.getChildren().clear();
-            Label title = new Label("Form Pemesanan Unit Apartemen");
-            title.setFont(Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 22));
-            title.setStyle("-fx-text-fill: #2C3E50;");
+    private static final Map<String, Integer> BATAS_DURASI = Map.of(
+            "Harian", 6, "Mingguan", 3, "Bulanan", 11, "Tahunan", 5);
 
-            Label desc = new Label("Silakan lihat unit yang tersedia dan isi durasi sewa hunian Anda.");
-            desc.setFont(Font.font("Segoe UI", 14));
-            desc.setStyle("-fx-text-fill: #34495E;");
-            contentArea.getChildren().addAll(title, desc);
+    public PenyewaDashboardView(DataManager dm, Penyewa penyewa, Runnable onLogout) {
+        this.dm = dm;
+        this.penyewa = penyewa;
+        this.onLogout = onLogout;
+
+        setLeft(buildSidebar());
+        setCenter(wrapContent(buildBeranda()));
+        setStyle("-fx-background-color: " + Theme.APP_BG + ";");
+    }
+
+    // ---------- SIDEBAR ----------
+    private VBox buildSidebar() {
+        Label brand = new Label("ApartEase");
+        brand.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        brand.setStyle("-fx-text-fill: white;");
+        Label role = new Label("Halo, " + penyewa.getNama());
+        role.setFont(Font.font("Segoe UI", 12));
+        role.setStyle("-fx-text-fill: #94A3B8;");
+        role.setWrapText(true);
+        VBox brandBox = new VBox(2, brand, role);
+        brandBox.setPadding(new Insets(8, 8, 20, 8));
+
+        Button bBeranda  = Theme.navButton("\uD83C\uDFE0  Beranda");
+        Button bCek      = Theme.navButton("\uD83D\uDD0D  Cek Unit & Harga");
+        Button bPesan    = Theme.navButton("\uD83C\uDFE2  Pesan Unit");
+        Button bBayar    = Theme.navButton("\uD83D\uDCB3  Bayar Sewa");
+        Button bStatus   = Theme.navButton("\uD83D\uDCCB  Status Penyewaan");
+        Button bRiwayat  = Theme.navButton("\uD83E\uDDFE  Riwayat Transaksi");
+        Button bKomplain = Theme.navButton("\u26A0\uFE0F  Komplain");
+        Button bNotif    = Theme.navButton("\uD83D\uDD14  Notifikasi");
+        Button bLogout   = Theme.navButton("\uD83D\uDEAA  Keluar");
+
+        bBeranda.setOnAction(e -> setCenter(wrapContent(buildBeranda())));
+        bCek.setOnAction(e -> setCenter(wrapContent(buildCekUnit())));
+        bPesan.setOnAction(e -> setCenter(wrapContent(buildPesanUnit())));
+        bBayar.setOnAction(e -> setCenter(wrapContent(buildBayarSewa())));
+        bStatus.setOnAction(e -> setCenter(wrapContent(buildStatus())));
+        bRiwayat.setOnAction(e -> setCenter(wrapContent(buildRiwayat())));
+        bKomplain.setOnAction(e -> setCenter(wrapContent(buildKomplain())));
+        bNotif.setOnAction(e -> setCenter(wrapContent(buildNotifikasi())));
+        bLogout.setOnAction(e -> onLogout.run());
+
+        VBox menu = new VBox(4, bBeranda, bCek, bPesan, bBayar, bStatus,
+                bRiwayat, bKomplain, bNotif);
+        VBox.setVgrow(menu, Priority.ALWAYS);
+
+        VBox sidebar = new VBox(brandBox, menu, bLogout);
+        sidebar.setPadding(new Insets(20, 12, 20, 12));
+        sidebar.setPrefWidth(240);
+        sidebar.setStyle("-fx-background-color: " + Theme.SIDEBAR + ";");
+        return sidebar;
+    }
+
+    private Node wrapContent(Node content) {
+        VBox box = new VBox(18);
+        box.setPadding(new Insets(28));
+        headerTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
+        headerTitle.setStyle("-fx-text-fill: " + Theme.TEXT_DARK + ";");
+        box.getChildren().addAll(headerTitle, content);
+        VBox.setVgrow(content, Priority.ALWAYS);
+        ScrollPane sp = new ScrollPane(box);
+        sp.setFitToWidth(true);
+        sp.setStyle("-fx-background-color: transparent; -fx-background: " + Theme.APP_BG + ";");
+        return sp;
+    }
+
+    // ---------- BERANDA ----------
+    private Node buildBeranda() {
+        headerTitle.setText("Selamat Datang, " + penyewa.getNama());
+
+        List<Booking> bookings = dm.getBookingPenyewa(penyewa.getUsername());
+        int belumLunas = 0;
+        for (Booking b : bookings) {
+            if (b.getStatusPembayaran().equals("Belum Lunas")) belumLunas++;
+        }
+
+        HBox stats = new HBox(16,
+                Theme.statCard("Unit Dipesan", String.valueOf(bookings.size()), Theme.BRAND),
+                Theme.statCard("Tagihan Belum Lunas", String.valueOf(belumLunas), Theme.WARNING),
+                Theme.statCard("Notifikasi", String.valueOf(penyewa.getNotifikasi().size()), Theme.SUCCESS));
+
+        VBox info = Theme.card(
+                Theme.h2("Panduan Singkat"),
+                Theme.muted("\u2022 Cek Unit & Harga untuk melihat ketersediaan dan tarif.\n"
+                        + "\u2022 Pesan Unit untuk mengajukan sewa (maksimal 2 unit).\n"
+                        + "\u2022 Bayar Sewa untuk melunasi tagihan.\n"
+                        + "\u2022 Komplain untuk melaporkan masalah pada unit yang Anda sewa."));
+
+        return new VBox(16, stats, info);
+    }
+
+    // ---------- CEK UNIT & HARGA ----------
+    private Node buildCekUnit() {
+        headerTitle.setText("Cek Unit & Harga");
+
+        TextField txtLantai = input("Lantai (2-20)");
+        TextField txtHuruf = input("Blok (A-Z)");
+        Button cek = Theme.primaryButton("Cek Unit");
+
+        VBox hasil = new VBox(8);
+        cek.setOnAction(e -> {
+            hasil.getChildren().clear();
+            String sl = txtLantai.getText().trim();
+            String sh = txtHuruf.getText().trim().toUpperCase();
+            if (!sl.matches("\\d+") || sh.length() != 1 || sh.charAt(0) < 'A' || sh.charAt(0) > 'Z') {
+                hasil.getChildren().add(errLabel("Masukkan lantai berupa angka dan blok satu huruf A-Z."));
+                return;
+            }
+            int lantai = Integer.parseInt(sl);
+            if (lantai < 2 || lantai > 20) {
+                hasil.getChildren().add(errLabel("Lantai tersedia hanya dari 2 sampai 20."));
+                return;
+            }
+            UnitApartemen u = dm.cariUnit(lantai, sh.charAt(0));
+            if (u == null) {
+                hasil.getChildren().add(errLabel("Unit tidak ditemukan."));
+                return;
+            }
+            HargaSewa hs = dm.getHargaSewa();
+            Label judul = Theme.h2("Unit " + u.getKodeUnit() + " \u2014 " + u.getTipeUnit());
+            Label st = new Label("Status: " + u.getStatus());
+            st.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 14));
+            st.setStyle("-fx-text-fill: " + (u.isTersewa() ? Theme.DANGER : Theme.SUCCESS) + ";");
+            Label harga = Theme.muted(String.format(
+                    "Harian: Rp %,d\nMingguan: Rp %,d\nBulanan: Rp %,d\nTahunan: Rp %,d",
+                    hs.getHarga(u.getTipeUnit(), "harian"),
+                    hs.getHarga(u.getTipeUnit(), "mingguan"),
+                    hs.getHarga(u.getTipeUnit(), "bulanan"),
+                    hs.getHarga(u.getTipeUnit(), "tahunan")));
+            hasil.getChildren().addAll(judul, st, harga);
         });
 
-        bayarSewaBtn.setOnAction(e -> {
-            contentArea.getChildren().clear();
-            Label title = new Label("Portal Pembayaran Sewa Bulanan");
-            title.setFont(Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 22));
-            title.setStyle("-fx-text-fill: #2C3E50;");
+        HBox form = new HBox(10, txtLantai, txtHuruf, cek);
+        form.setAlignment(Pos.CENTER_LEFT);
 
-            Label desc = new Label("Lihat total tagihan bulanan dan unggah bukti transfer pembayaran di sini.");
-            desc.setFont(Font.font("Segoe UI", 14));
-            desc.setStyle("-fx-text-fill: #34495E;");
-            contentArea.getChildren().addAll(title, desc);
+        return Theme.card(
+                Theme.muted("Blok A\u2013M = Studio Unit, blok N\u2013Z = Family Unit."),
+                form, hasil);
+    }
+
+    // ---------- PESAN UNIT ----------
+    private Node buildPesanUnit() {
+        headerTitle.setText("Pesan Unit Apartemen");
+
+        if (dm.hitungBookingPenyewa(penyewa.getUsername()) >= 2) {
+            return Theme.card(Theme.h2("Batas Pemesanan Tercapai"),
+                    Theme.muted("Anda sudah memesan maksimal 2 unit. "
+                            + "Lunasi atau kelola pesanan Anda terlebih dahulu."));
+        }
+
+        TextField txtLantai = input("Lantai (2-20)");
+        TextField txtHuruf = input("Blok (A-Z)");
+
+        ComboBox<String> cbDurasi = new ComboBox<>();
+        cbDurasi.getItems().addAll("Harian", "Mingguan", "Bulanan", "Tahunan");
+        cbDurasi.setValue("Bulanan");
+
+        TextField txtJumlah = new TextField("1");
+        txtJumlah.setPrefWidth(120);
+        styleInput(txtJumlah);
+
+        Label res = new Label();
+        res.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        res.setWrapText(true);
+
+        Button pesan = Theme.successButton("Ajukan Pemesanan");
+        pesan.setOnAction(e -> prosesPesan(txtLantai, txtHuruf, cbDurasi, txtJumlah, res));
+
+        GridPane grid = new GridPane();
+        grid.setHgap(14);
+        grid.setVgap(12);
+        grid.add(Theme.fieldLabel("Lantai"), 0, 0);       grid.add(txtLantai, 1, 0);
+        grid.add(Theme.fieldLabel("Blok Huruf"), 0, 1);   grid.add(txtHuruf, 1, 1);
+        grid.add(Theme.fieldLabel("Paket Durasi"), 0, 2); grid.add(cbDurasi, 1, 2);
+        grid.add(Theme.fieldLabel("Jumlah Durasi"), 0, 3);grid.add(txtJumlah, 1, 3);
+        grid.add(pesan, 1, 4);
+
+        return Theme.card(
+                Theme.muted("Maksimal: Harian 6 hari, Mingguan 3 minggu, "
+                        + "Bulanan 11 bulan, Tahunan 5 tahun. Tipe unit otomatis sesuai blok."),
+                grid, res);
+    }
+
+    private void prosesPesan(TextField txtLantai, TextField txtHuruf,
+                             ComboBox<String> cbDurasi, TextField txtJumlah, Label res) {
+        String sl = txtLantai.getText().trim();
+        String sh = txtHuruf.getText().trim().toUpperCase();
+        String sj = txtJumlah.getText().trim();
+
+        if (sl.isEmpty() || sh.isEmpty() || sj.isEmpty()) {
+            setErr(res, "Semua kolom wajib diisi."); return;
+        }
+        if (!sl.matches("\\d+") || !sj.matches("\\d+")) {
+            setErr(res, "Lantai dan jumlah durasi harus berupa angka."); return;
+        }
+        int lantai = Integer.parseInt(sl);
+        int jumlah = Integer.parseInt(sj);
+        if (lantai < 2 || lantai > 20) { setErr(res, "Lantai harus 2 sampai 20."); return; }
+        if (sh.length() != 1 || sh.charAt(0) < 'A' || sh.charAt(0) > 'Z') {
+            setErr(res, "Blok harus satu huruf A-Z."); return;
+        }
+        if (jumlah <= 0) { setErr(res, "Jumlah durasi harus lebih dari 0."); return; }
+
+        String durasi = cbDurasi.getValue();
+        int max = BATAS_DURASI.getOrDefault(durasi, 1);
+        if (jumlah > max) {
+            setErr(res, "Maksimal " + max + " untuk paket " + durasi + "."); return;
+        }
+
+        UnitApartemen unit = dm.cariUnit(lantai, sh.charAt(0));
+        if (unit == null) { setErr(res, "Unit " + lantai + sh + " tidak ditemukan."); return; }
+        if (unit.isTersewa()) { setErr(res, "Unit " + unit.getKodeUnit() + " sedang disewa."); return; }
+
+        long hargaSatuan = dm.getHargaSewa().getHarga(unit.getTipeUnit(), durasi.toLowerCase());
+        long total = hargaSatuan * jumlah;
+
+        Booking b = new Booking(penyewa.getUsername(), unit.getKodeUnit(),
+                unit.getTipeUnit(), durasi, jumlah, total);
+        dm.simpanBookingBaru(b);
+
+        unit.setTersewa(true);
+        unit.setPenyewaUsername(penyewa.getUsername());
+        dm.updateUnit(unit);
+
+        dm.tambahRiwayat(penyewa, "Booking " + b.getIdBooking() + " - " + unit.getKodeUnit()
+                + " - Rp" + String.format("%,d", total) + " - Belum Lunas");
+        dm.tambahNotifikasi(penyewa, "Booking berhasil dibuat. ID: " + b.getIdBooking()
+                + ", Unit: " + unit.getKodeUnit() + ", Total: Rp" + String.format("%,d", total));
+
+        res.setStyle("-fx-text-fill: " + Theme.SUCCESS + ";");
+        res.setText("Pemesanan berhasil! ID: " + b.getIdBooking()
+                + " | Total: Rp " + String.format("%,d", total)
+                + ". Silakan lunasi di menu Bayar Sewa.");
+        txtLantai.clear(); txtHuruf.clear(); txtJumlah.setText("1");
+    }
+
+    // ---------- BAYAR SEWA ----------
+    private Node buildBayarSewa() {
+        headerTitle.setText("Bayar Sewa");
+
+        TableView<Booking> table = new TableView<>();
+        table.getColumns().add(col("ID", Booking::getIdBooking));
+        table.getColumns().add(col("Unit", Booking::getKodeUnit));
+        table.getColumns().add(col("Tipe", Booking::getTipeUnit));
+        table.getColumns().add(col("Total", b -> "Rp " + String.format("%,d", b.getTotalHarga())));
+        Theme.styleTable(table);
+        table.setPlaceholder(Theme.muted("Tidak ada tagihan yang perlu dibayar."));
+        isiTagihan(table);
+
+        TextField txtBayar = input("Nominal pembayaran (Rp)");
+        Label status = new Label();
+        status.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        status.setWrapText(true);
+
+        Button bayar = Theme.successButton("Bayar Tagihan Terpilih");
+        bayar.setOnAction(e -> {
+            Booking t = table.getSelectionModel().getSelectedItem();
+            if (t == null) { setErr(status, "Pilih tagihan yang ingin dibayar."); return; }
+            String sb = txtBayar.getText().trim();
+            if (!sb.matches("\\d+")) { setErr(status, "Nominal harus berupa angka."); return; }
+            long bayarVal = Long.parseLong(sb);
+            if (bayarVal < t.getTotalHarga()) {
+                setErr(status, "Nominal kurang Rp "
+                        + String.format("%,d", t.getTotalHarga() - bayarVal) + ".");
+                return;
+            }
+            long kembalian = bayarVal - t.getTotalHarga();
+            t.setStatusPembayaran("Lunas");
+            dm.updateBooking(t);
+            dm.tambahNotifikasi(penyewa, "Pembayaran booking " + t.getIdBooking()
+                    + " berhasil. Status: Lunas.");
+            dm.tambahRiwayat(penyewa, "Pembayaran " + t.getIdBooking()
+                    + " - Lunas - Rp" + String.format("%,d", t.getTotalHarga()));
+            isiTagihan(table);
+            txtBayar.clear();
+            status.setStyle("-fx-text-fill: " + Theme.SUCCESS + ";");
+            status.setText("Pembayaran " + t.getIdBooking() + " berhasil. Kembalian: Rp "
+                    + String.format("%,d", kembalian) + ".");
         });
+
+        VBox tableCard = Theme.card(Theme.h2("Tagihan Belum Lunas"), table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        VBox payCard = Theme.card(Theme.h2("Pembayaran"),
+                Theme.muted("Pilih satu tagihan di atas, masukkan nominal, lalu tekan bayar."),
+                txtBayar, bayar, status);
+        return new VBox(16, tableCard, payCard);
     }
 
-    private void initSidebar() {
-        VBox sidebar = new VBox(15);
-        sidebar.setPadding(new Insets(25, 15, 25, 15));
-        sidebar.setStyle("-fx-background-color: #FADBD8;"); // Pink Pastel Lembut
-        sidebar.setPrefWidth(220);
-
-        Label logoLabel = new Label("ApartEase\n(Penyewa)");
-        logoLabel.setFont(Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 22));
-        logoLabel.setStyle("-fx-text-fill: #2C3E50; -fx-padding: 0 0 20 0;");
-
-        pesanUnitBtn = createMenuButton("🏢 Pesan Unit Apt.");
-        bayarSewaBtn = createMenuButton("💳 Bayar Sewa");
-        
-        logoutBtn = createMenuButton("🚪 Kembali ke Menu");
-        logoutBtn.setStyle("-fx-background-color: #F1948A; -fx-text-fill: #2C3E50; -fx-font-weight: bold; -fx-alignment: BASELINE_LEFT; -fx-cursor: hand; -fx-background-radius: 5;");
-
-        sidebar.getChildren().addAll(logoLabel, pesanUnitBtn, bayarSewaBtn, logoutBtn);
-        this.setLeft(sidebar);
+    private void isiTagihan(TableView<Booking> table) {
+        var items = FXCollections.<Booking>observableArrayList();
+        for (Booking b : dm.getBookingPenyewa(penyewa.getUsername())) {
+            if (b.getStatusPembayaran().equals("Belum Lunas")) items.add(b);
+        }
+        table.setItems(items);
     }
 
-    private void initContentArea() {
-        contentArea = new VBox(20);
-        contentArea.setPadding(new Insets(30));
-        contentArea.setStyle("-fx-background-color: #F5EEF8;"); // Ungu Violet Pastel Sangat Muda
-        
-        Label welcome = new Label("Selamat Datang, Penyewa!");
-        welcome.setFont(Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 26));
-        welcome.setStyle("-fx-text-fill: #2C3E50;");
-        
-        Label descLabel = new Label("Silakan pilih menu di sebelah kiri untuk melihat informasi hunian Anda.");
-        descLabel.setFont(Font.font("Segoe UI", 14));
-        descLabel.setStyle("-fx-text-fill: #566573;");
+    // ---------- STATUS PENYEWAAN ----------
+    private Node buildStatus() {
+        headerTitle.setText("Status Penyewaan & Pembayaran");
 
-        contentArea.getChildren().addAll(welcome, descLabel);
-        this.setCenter(contentArea);
+        TableView<Booking> table = new TableView<>();
+        table.getColumns().add(col("ID", Booking::getIdBooking));
+        table.getColumns().add(col("Unit", Booking::getKodeUnit));
+        table.getColumns().add(col("Tipe", Booking::getTipeUnit));
+        table.getColumns().add(col("Durasi", b -> b.getJumlahDurasi() + " " + b.getDurasiTipe()));
+        table.getColumns().add(col("Masuk", Booking::getTanggalMasukStr));
+        table.getColumns().add(col("Keluar", Booking::getTanggalKeluarStr));
+        table.getColumns().add(col("Total", b -> "Rp " + String.format("%,d", b.getTotalHarga())));
+        table.getColumns().add(col("Status", Booking::getStatusPembayaran));
+        Theme.styleTable(table);
+        table.setPlaceholder(Theme.muted("Anda belum memiliki pemesanan."));
+        table.setItems(FXCollections.observableArrayList(dm.getBookingPenyewa(penyewa.getUsername())));
+
+        VBox box = new VBox(table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        return Theme.card(box);
     }
 
-    private Button createMenuButton(String text) {
-        Button btn = new Button(text);
-        btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setPadding(new Insets(10, 15, 10, 15));
-        btn.setFont(Font.font("Segoe UI", 14));
-        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #2C3E50; -fx-alignment: BASELINE_LEFT; -fx-cursor: hand; -fx-font-weight: bold;");
-        
-        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: rgba(255, 255, 255, 0.6); -fx-text-fill: #2C3E50; -fx-alignment: BASELINE_LEFT; -fx-cursor: hand; -fx-background-radius: 5; -fx-font-weight: bold;"));
-        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #2C3E50; -fx-alignment: BASELINE_LEFT; -fx-cursor: hand; -fx-font-weight: bold;"));
-        
-        return btn;
+    // ---------- RIWAYAT ----------
+    private Node buildRiwayat() {
+        headerTitle.setText("Riwayat Transaksi");
+        List<String> riwayat = penyewa.getRiwayatTransaksi();
+        if (riwayat.isEmpty()) {
+            return Theme.card(Theme.muted("Belum ada riwayat transaksi."));
+        }
+        VBox list = new VBox(8);
+        int i = 1;
+        for (String r : riwayat) {
+            Label l = new Label(i++ + ". " + r);
+            l.setFont(Font.font("Segoe UI", 13));
+            l.setStyle("-fx-text-fill: " + Theme.TEXT_DARK + ";");
+            l.setWrapText(true);
+            list.getChildren().add(l);
+        }
+        return Theme.card(list);
+    }
+
+    // ---------- KOMPLAIN ----------
+    private Node buildKomplain() {
+        headerTitle.setText("Komplain");
+
+        List<Booking> bookings = dm.getBookingPenyewa(penyewa.getUsername());
+
+        VBox formCard;
+        if (bookings.isEmpty()) {
+            formCard = Theme.card(Theme.h2("Ajukan Komplain"),
+                    Theme.muted("Anda belum menyewa unit, jadi belum bisa mengajukan komplain."));
+        } else {
+            ComboBox<String> cbUnit = new ComboBox<>();
+            for (Booking b : bookings) {
+                if (!cbUnit.getItems().contains(b.getKodeUnit())) cbUnit.getItems().add(b.getKodeUnit());
+            }
+            cbUnit.setValue(cbUnit.getItems().get(0));
+
+            TextArea txtIsi = new TextArea();
+            txtIsi.setPromptText("Jelaskan keluhan Anda...");
+            txtIsi.setPrefRowCount(3);
+            txtIsi.setWrapText(true);
+
+            Label status = new Label();
+            status.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+
+            Button ajukan = Theme.primaryButton("Ajukan Komplain");
+            VBox card = Theme.card(Theme.h2("Ajukan Komplain"),
+                    Theme.fieldLabel("Unit"), cbUnit,
+                    Theme.fieldLabel("Isi Komplain"), txtIsi, ajukan, status);
+
+            ajukan.setOnAction(e -> {
+                String isi = txtIsi.getText().trim();
+                if (isi.isEmpty()) { setErr(status, "Isi komplain tidak boleh kosong."); return; }
+                Komplain k = new Komplain(penyewa.getUsername(), cbUnit.getValue(), isi);
+                dm.simpanKomplainBaru(k);
+                txtIsi.clear();
+                status.setStyle("-fx-text-fill: " + Theme.SUCCESS + ";");
+                status.setText("Komplain terkirim. ID: " + k.getIdKomplain()
+                        + ". Buka kembali menu ini untuk melihat balasan admin.");
+            });
+            formCard = card;
+        }
+
+        TableView<Komplain> table = new TableView<>();
+        table.getColumns().add(col("ID", Komplain::getIdKomplain));
+        table.getColumns().add(col("Unit", Komplain::getKodeUnit));
+        table.getColumns().add(col("Isi", Komplain::getIsiKomplain));
+        table.getColumns().add(col("Status", Komplain::getStatus));
+        table.getColumns().add(col("Balasan Admin", Komplain::getBalasanAdmin));
+        Theme.styleTable(table);
+        table.setPlaceholder(Theme.muted("Anda belum pernah mengajukan komplain."));
+        table.setItems(FXCollections.observableArrayList(
+                dm.getKomplainPenyewa(penyewa.getUsername())));
+
+        VBox tableCard = Theme.card(Theme.h2("Komplain Anda"), table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        return new VBox(16, formCard, tableCard);
+    }
+
+    // ---------- NOTIFIKASI ----------
+    private Node buildNotifikasi() {
+        headerTitle.setText("Notifikasi");
+        List<String> notif = penyewa.getNotifikasi();
+        if (notif.isEmpty()) {
+            return Theme.card(Theme.muted("Tidak ada notifikasi."));
+        }
+        VBox list = new VBox(10);
+        for (String n : notif) {
+            Label l = new Label(n);
+            l.setFont(Font.font("Segoe UI", 13));
+            l.setStyle("-fx-text-fill: " + Theme.TEXT_DARK + "; -fx-background-color: #EEF2FF;"
+                    + " -fx-padding: 10 14; -fx-background-radius: 8;");
+            l.setWrapText(true);
+            l.setMaxWidth(Double.MAX_VALUE);
+            list.getChildren().add(l);
+        }
+        return Theme.card(list);
+    }
+
+    // ---------- UTIL ----------
+    private TextField input(String prompt) {
+        TextField tf = new TextField();
+        tf.setPromptText(prompt);
+        styleInput(tf);
+        return tf;
+    }
+
+    private void styleInput(TextField tf) {
+        tf.setStyle("-fx-background-radius: 8; -fx-border-color: " + Theme.BORDER
+                + "; -fx-border-radius: 8; -fx-padding: 9; -fx-font-size: 13px;");
+    }
+
+    private Label errLabel(String text) {
+        Label l = new Label(text);
+        l.setStyle("-fx-text-fill: " + Theme.DANGER + ";");
+        l.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        l.setWrapText(true);
+        return l;
+    }
+
+    private void setErr(Label l, String text) {
+        l.setStyle("-fx-text-fill: " + Theme.DANGER + ";");
+        l.setText(text);
+    }
+
+    private <S> TableColumn<S, String> col(String judul, Function<S, String> getter) {
+        TableColumn<S, String> c = new TableColumn<>(judul);
+        c.setCellValueFactory(cd -> new SimpleStringProperty(getter.apply(cd.getValue())));
+        return c;
     }
 }
