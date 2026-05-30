@@ -42,7 +42,7 @@ public class MainView extends Application {
         
         // Jika login sukses (admin/123) -> lari ke Menu Admin
         loginView.loginButton.setOnAction(e -> {
-            if (loginView.usernameField.getText().equals("admin") && loginView.passwordField.getText().equals("123")) {
+            if (loginView.usernameField.getText().equals("admin") && loginView.passwordField.getText().equals("admin123")) {
                 showAdminDashboardScreen();
             } else {
                 loginView.passwordField.clear();
