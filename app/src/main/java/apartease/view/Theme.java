@@ -22,18 +22,18 @@ public final class Theme {
     private Theme() { }
 
     // ====== PALET WARNA ======
-    public static final String BRAND       = "#4F46E5"; // Indigo
-    public static final String BRAND_DARK  = "#4338CA";
-    public static final String SIDEBAR     = "#1E293B"; // Slate gelap
+    public static final String BRAND       = "#ff059bff"; // ubh
+    public static final String BRAND_DARK  = "#a8ff05ff"; //ubh
+    public static final String SIDEBAR     = "#140252ff"; // Slate gelap
     public static final String SIDEBAR_HOV = "#334155";
-    public static final String APP_BG      = "#F1F5F9"; // Abu sangat muda
-    public static final String CARD_BG     = "#FFFFFF";
+    public static final String APP_BG      = "#f7f995ff"; // Abu sangat muda
+    public static final String CARD_BG     = "#aebef9ff"; //bkn text
     public static final String TEXT_DARK   = "#1E293B";
-    public static final String TEXT_MUTED  = "#64748B";
-    public static final String SUCCESS     = "#16A34A"; // Hijau
-    public static final String DANGER      = "#DC2626"; // Merah
+    public static final String TEXT_MUTED  = "#1c6616ff";
+    public static final String SUCCESS     = "#015807ff"; // Hijau.
+    public static final String DANGER      = "#ea348fff"; // Merah
     public static final String WARNING     = "#D97706"; // Oranye
-    public static final String BORDER      = "#E2E8F0";
+    public static final String BORDER      = "#ffb6e7ff";
 
     public static final String FONT = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif";
 

@@ -49,10 +49,10 @@ public class PenyewaDashboardView extends BorderPane {
     private VBox buildSidebar() {
         Label brand = new Label("ApartEase");
         brand.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        brand.setStyle("-fx-text-fill: white;");
+        brand.setStyle("-fx-text-fill: orange;");
         Label role = new Label("Halo, " + penyewa.getNama());
         role.setFont(Font.font("Segoe UI", 12));
-        role.setStyle("-fx-text-fill: #94A3B8;");
+        role.setStyle("-fx-text-fill: #c4ff04ff;");
         role.setWrapText(true);
         VBox brandBox = new VBox(2, brand, role);
         brandBox.setPadding(new Insets(8, 8, 20, 8));

@@ -44,8 +44,8 @@ public class WelcomeView extends VBox {
 
         keluarBtn = new Button("Keluar Aplikasi");
         keluarBtn.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 13));
-        String exitStyle = "-fx-background-color: transparent; -fx-text-fill: #CBD5E1;"
-                + " -fx-border-color: #CBD5E1; -fx-border-radius: 8; -fx-background-radius: 8;"
+        String exitStyle = "-fx-background-color: transparent; -fx-text-fill: #f4e7eaff;"
+                + " -fx-border-color: #c0f5f2ff; -fx-border-radius: 8; -fx-background-radius: 8;"
                 + " -fx-padding: 8 18; -fx-cursor: hand;";
         keluarBtn.setStyle(exitStyle);
 
@@ -65,9 +65,9 @@ public class WelcomeView extends VBox {
 
         Button btn = new Button();
         btn.setGraphic(content);
-        btn.setPrefSize(260, 150);
+        btn.setPrefSize(240, 90);
         String normal = "-fx-background-color: white; -fx-background-radius: 16; -fx-cursor: hand;";
-        String hover  = "-fx-background-color: #EEF2FF; -fx-background-radius: 16; -fx-cursor: hand;";
+        String hover  = "-fx-background-color: #93e2fdff; -fx-background-radius: 16; -fx-cursor: hand;";
         btn.setStyle(normal);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
         btn.setOnMouseExited(e -> btn.setStyle(normal));
