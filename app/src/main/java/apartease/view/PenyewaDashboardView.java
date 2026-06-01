@@ -52,9 +52,11 @@ public class PenyewaDashboardView extends BorderPane {
         brand.setStyle("-fx-text-fill: orange;");
         Label role = new Label("Halo, " + penyewa.getNama());
         role.setFont(Font.font("Segoe UI", 12));
-        role.setStyle("-fx-text-fill: #c4ff04ff;");
+        role.setStyle("-fx-text-fill: " + Theme.ON_DARK_MUTED + ";");
         role.setWrapText(true);
-        VBox brandBox = new VBox(2, brand, role);
+        VBox brandText = new VBox(2, brand, role);
+        HBox brandBox = new HBox(12, Theme.avatar(penyewa.getNama(), 44), brandText);
+        brandBox.setAlignment(Pos.CENTER_LEFT);
         brandBox.setPadding(new Insets(8, 8, 20, 8));
 
         Button bBeranda  = Theme.navButton("\uD83C\uDFE0  Beranda");
@@ -65,20 +67,27 @@ public class PenyewaDashboardView extends BorderPane {
         Button bRiwayat  = Theme.navButton("\uD83E\uDDFE  Riwayat Transaksi");
         Button bKomplain = Theme.navButton("\u26A0\uFE0F  Komplain");
         Button bNotif    = Theme.navButton("\uD83D\uDD14  Notifikasi");
+        Button bProfil   = Theme.navButton("\uD83D\uDC64  Ubah Profil");
         Button bLogout   = Theme.navButton("\uD83D\uDEAA  Keluar");
 
-        bBeranda.setOnAction(e -> setCenter(wrapContent(buildBeranda())));
-        bCek.setOnAction(e -> setCenter(wrapContent(buildCekUnit())));
-        bPesan.setOnAction(e -> setCenter(wrapContent(buildPesanUnit())));
-        bBayar.setOnAction(e -> setCenter(wrapContent(buildBayarSewa())));
-        bStatus.setOnAction(e -> setCenter(wrapContent(buildStatus())));
-        bRiwayat.setOnAction(e -> setCenter(wrapContent(buildRiwayat())));
-        bKomplain.setOnAction(e -> setCenter(wrapContent(buildKomplain())));
-        bNotif.setOnAction(e -> setCenter(wrapContent(buildNotifikasi())));
+        java.util.List<Button> navs = java.util.List.of(bBeranda, bCek, bPesan, bBayar,
+                bStatus, bRiwayat, bKomplain, bNotif, bProfil);
+
+        bBeranda.setOnAction(e -> { Theme.setActiveNav(bBeranda, navs); setCenter(wrapContent(buildBeranda())); });
+        bCek.setOnAction(e -> { Theme.setActiveNav(bCek, navs); setCenter(wrapContent(buildCekUnit())); });
+        bPesan.setOnAction(e -> { Theme.setActiveNav(bPesan, navs); setCenter(wrapContent(buildPesanUnit())); });
+        bBayar.setOnAction(e -> { Theme.setActiveNav(bBayar, navs); setCenter(wrapContent(buildBayarSewa())); });
+        bStatus.setOnAction(e -> { Theme.setActiveNav(bStatus, navs); setCenter(wrapContent(buildStatus())); });
+        bRiwayat.setOnAction(e -> { Theme.setActiveNav(bRiwayat, navs); setCenter(wrapContent(buildRiwayat())); });
+        bKomplain.setOnAction(e -> { Theme.setActiveNav(bKomplain, navs); setCenter(wrapContent(buildKomplain())); });
+        bNotif.setOnAction(e -> { Theme.setActiveNav(bNotif, navs); setCenter(wrapContent(buildNotifikasi())); });
+        bProfil.setOnAction(e -> { Theme.setActiveNav(bProfil, navs); setCenter(wrapContent(buildProfil())); });
         bLogout.setOnAction(e -> onLogout.run());
 
+        Theme.setActiveNav(bBeranda, navs); // menu awal yang tersorot
+
         VBox menu = new VBox(4, bBeranda, bCek, bPesan, bBayar, bStatus,
-                bRiwayat, bKomplain, bNotif);
+                bRiwayat, bKomplain, bNotif, bProfil);
         VBox.setVgrow(menu, Priority.ALWAYS);
 
         VBox sidebar = new VBox(brandBox, menu, bLogout);
@@ -123,7 +132,10 @@ public class PenyewaDashboardView extends BorderPane {
                         + "\u2022 Bayar Sewa untuk melunasi tagihan.\n"
                         + "\u2022 Komplain untuk melaporkan masalah pada unit yang Anda sewa."));
 
-        return new VBox(16, stats, info);
+        return new VBox(16,
+                Theme.banner("Selamat Datang, " + penyewa.getNama(),
+                        "Pesan unit, bayar sewa, dan ajukan komplain dengan mudah."),
+                stats, info);
     }
 
     // ---------- CEK UNIT & HARGA ----------
@@ -343,7 +355,7 @@ public class PenyewaDashboardView extends BorderPane {
         table.getColumns().add(col("Masuk", Booking::getTanggalMasukStr));
         table.getColumns().add(col("Keluar", Booking::getTanggalKeluarStr));
         table.getColumns().add(col("Total", b -> "Rp " + String.format("%,d", b.getTotalHarga())));
-        table.getColumns().add(col("Status", Booking::getStatusPembayaran));
+        table.getColumns().add(Theme.badgeCol("Status", Booking::getStatusPembayaran));
         Theme.styleTable(table);
         table.setPlaceholder(Theme.muted("Anda belum memiliki pemesanan."));
         table.setItems(FXCollections.observableArrayList(dm.getBookingPenyewa(penyewa.getUsername())));
@@ -419,7 +431,7 @@ public class PenyewaDashboardView extends BorderPane {
         table.getColumns().add(col("ID", Komplain::getIdKomplain));
         table.getColumns().add(col("Unit", Komplain::getKodeUnit));
         table.getColumns().add(col("Isi", Komplain::getIsiKomplain));
-        table.getColumns().add(col("Status", Komplain::getStatus));
+        table.getColumns().add(Theme.badgeCol("Status", Komplain::getStatus));
         table.getColumns().add(col("Balasan Admin", Komplain::getBalasanAdmin));
         Theme.styleTable(table);
         table.setPlaceholder(Theme.muted("Anda belum pernah mengajukan komplain."));
@@ -442,13 +454,80 @@ public class PenyewaDashboardView extends BorderPane {
         for (String n : notif) {
             Label l = new Label(n);
             l.setFont(Font.font("Segoe UI", 13));
-            l.setStyle("-fx-text-fill: " + Theme.TEXT_DARK + "; -fx-background-color: #EEF2FF;"
+            l.setStyle("-fx-text-fill: " + Theme.TEXT_DARK + "; -fx-background-color: " + Theme.ACCENT_SOFT + ";"
                     + " -fx-padding: 10 14; -fx-background-radius: 8;");
             l.setWrapText(true);
             l.setMaxWidth(Double.MAX_VALUE);
             list.getChildren().add(l);
         }
         return Theme.card(list);
+    }
+
+    // ---------- UBAH PROFIL ----------
+    private Node buildProfil() {
+        headerTitle.setText("Ubah Profil");
+
+        TextField txtNama = input("Nama lengkap");
+        txtNama.setText(penyewa.getNama());
+        TextField txtEmail = input("Email");
+        txtEmail.setText(penyewa.getEmail());
+        TextField txtHp = input("No. HP");
+        txtHp.setText(penyewa.getNoHp());
+        PasswordField txtPass = new PasswordField();
+        txtPass.setPromptText("Password baru (kosongkan jika tidak diubah)");
+        styleInput(txtPass);
+
+        Label status = new Label();
+        status.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        status.setWrapText(true);
+
+        Button simpan = Theme.primaryButton("Simpan Perubahan");
+        simpan.setOnAction(e -> {
+            String nama = txtNama.getText().trim();
+            String email = txtEmail.getText().trim();
+            String hp = txtHp.getText().trim();
+            String pass = txtPass.getText().trim();
+
+            if (nama.isEmpty() || email.isEmpty() || hp.isEmpty()) {
+                setErr(status, "Nama, email, dan no. HP tidak boleh kosong."); return;
+            }
+            if (!email.contains("@") || !email.contains(".")) {
+                setErr(status, "Format email tidak valid."); return;
+            }
+            if (!hp.matches("\\d{10,13}")) {
+                setErr(status, "No. HP harus 10\u201313 digit angka."); return;
+            }
+            if (!pass.isEmpty() && pass.length() < 6) {
+                setErr(status, "Password baru minimal 6 karakter."); return;
+            }
+
+            penyewa.setNama(nama);
+            penyewa.setEmail(email);
+            penyewa.setNoHp(hp);
+            if (!pass.isEmpty()) penyewa.setPassword(pass);
+            dm.updatePenyewa(penyewa);
+
+            status.setStyle("-fx-text-fill: " + Theme.SUCCESS + ";");
+            status.setText("Profil berhasil diperbarui.");
+        });
+
+        GridPane grid = new GridPane();
+        grid.setHgap(14);
+        grid.setVgap(12);
+        grid.add(Theme.fieldLabel("Username"), 0, 0);
+        Label uname = new Label(penyewa.getUsername());
+        uname.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        uname.setStyle("-fx-text-fill: " + Theme.TEXT_MUTED + ";");
+        grid.add(uname, 1, 0);
+        grid.add(Theme.fieldLabel("Nama"), 0, 1);     grid.add(txtNama, 1, 1);
+        grid.add(Theme.fieldLabel("Email"), 0, 2);    grid.add(txtEmail, 1, 2);
+        grid.add(Theme.fieldLabel("No. HP"), 0, 3);   grid.add(txtHp, 1, 3);
+        grid.add(Theme.fieldLabel("Password"), 0, 4); grid.add(txtPass, 1, 4);
+        grid.add(simpan, 1, 5);
+
+        return Theme.card(
+                Theme.muted("Username tidak dapat diubah. Perubahan tersimpan permanen."),
+                grid, status);
     }
 
     // ---------- UTIL ----------

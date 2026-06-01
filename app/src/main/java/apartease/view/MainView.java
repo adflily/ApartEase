@@ -1,5 +1,6 @@
 package apartease.view;
 
+import apartease.model.Admin;
 import apartease.model.DataManager;
 import apartease.model.Penyewa;
 
@@ -62,8 +63,9 @@ public class MainView extends Application {
             if (u.isEmpty() || p.isEmpty()) {
                 v.showError("Username dan password wajib diisi."); return;
             }
-            if (dm.cariAdmin(u, p) != null) {
-                showAdminDashboard();
+            Admin admin = dm.cariAdmin(u, p);
+            if (admin != null) {
+                showAdminDashboard(admin);
             } else {
                 v.showError("Kredensial admin salah.");
                 v.passwordField.clear();
@@ -158,8 +160,8 @@ public class MainView extends Application {
     }
 
     // ---------- DASHBOARD ----------
-    private void showAdminDashboard() {
-        setRoot(new AdminDashboardView(dm, this::showWelcome));
+    private void showAdminDashboard(Admin admin) {
+        setRoot(new AdminDashboardView(dm, admin, this::showWelcome));
     }
 
     private void showPenyewaDashboard(Penyewa penyewa) {

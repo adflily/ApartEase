@@ -1,5 +1,6 @@
 package apartease.view;
 
+import apartease.model.Admin;
 import apartease.model.Booking;
 import apartease.model.DataManager;
 import apartease.model.HargaSewa;
@@ -26,11 +27,13 @@ import java.util.function.Function;
 public class AdminDashboardView extends BorderPane {
 
     private final DataManager dm;
+    private final Admin admin;
     private final Runnable onLogout;
     private final Label headerTitle = new Label();
 
-    public AdminDashboardView(DataManager dm, Runnable onLogout) {
+    public AdminDashboardView(DataManager dm, Admin admin, Runnable onLogout) {
         this.dm = dm;
+        this.admin = admin;
         this.onLogout = onLogout;
 
         setLeft(buildSidebar());
@@ -45,8 +48,10 @@ public class AdminDashboardView extends BorderPane {
         brand.setStyle("-fx-text-fill: white;");
         Label role = new Label("Panel Admin");
         role.setFont(Font.font("Segoe UI", 12));
-        role.setStyle("-fx-text-fill: #94A3B8;");
-        VBox brandBox = new VBox(2, brand, role);
+        role.setStyle("-fx-text-fill: " + Theme.ON_DARK_MUTED + ";");
+        VBox brandText = new VBox(2, brand, role);
+        HBox brandBox = new HBox(12, Theme.avatar("Admin", 44), brandText);
+        brandBox.setAlignment(Pos.CENTER_LEFT);
         brandBox.setPadding(new Insets(8, 8, 20, 8));
 
         Button bBeranda    = Theme.navButton("\uD83D\uDCCA  Beranda");
@@ -57,20 +62,27 @@ public class AdminDashboardView extends BorderPane {
         Button bKomplain   = Theme.navButton("\u26A0\uFE0F  Kelola Komplain");
         Button bHarga      = Theme.navButton("\uD83C\uDFF7\uFE0F  Atur Harga");
         Button bPengumuman = Theme.navButton("\uD83D\uDCE2  Pengumuman");
+        Button bProfil     = Theme.navButton("\uD83D\uDC64  Profil");
         Button bLogout     = Theme.navButton("\uD83D\uDEAA  Logout");
 
-        bBeranda.setOnAction(e -> setCenter(wrapContent(buildBeranda())));
-        bUnit.setOnAction(e -> setCenter(wrapContent(buildDataUnit())));
-        bPenyewa.setOnAction(e -> setCenter(wrapContent(buildDataPenyewa())));
-        bBooking.setOnAction(e -> setCenter(wrapContent(buildPemesanan())));
-        bBayar.setOnAction(e -> setCenter(wrapContent(buildPembayaran())));
-        bKomplain.setOnAction(e -> setCenter(wrapContent(buildKomplain())));
-        bHarga.setOnAction(e -> setCenter(wrapContent(buildAturHarga())));
-        bPengumuman.setOnAction(e -> setCenter(wrapContent(buildPengumuman())));
+        java.util.List<Button> navs = java.util.List.of(bBeranda, bUnit, bPenyewa,
+                bBooking, bBayar, bKomplain, bHarga, bPengumuman, bProfil);
+
+        bBeranda.setOnAction(e -> { Theme.setActiveNav(bBeranda, navs); setCenter(wrapContent(buildBeranda())); });
+        bUnit.setOnAction(e -> { Theme.setActiveNav(bUnit, navs); setCenter(wrapContent(buildDataUnit())); });
+        bPenyewa.setOnAction(e -> { Theme.setActiveNav(bPenyewa, navs); setCenter(wrapContent(buildDataPenyewa())); });
+        bBooking.setOnAction(e -> { Theme.setActiveNav(bBooking, navs); setCenter(wrapContent(buildPemesanan())); });
+        bBayar.setOnAction(e -> { Theme.setActiveNav(bBayar, navs); setCenter(wrapContent(buildPembayaran())); });
+        bKomplain.setOnAction(e -> { Theme.setActiveNav(bKomplain, navs); setCenter(wrapContent(buildKomplain())); });
+        bHarga.setOnAction(e -> { Theme.setActiveNav(bHarga, navs); setCenter(wrapContent(buildAturHarga())); });
+        bPengumuman.setOnAction(e -> { Theme.setActiveNav(bPengumuman, navs); setCenter(wrapContent(buildPengumuman())); });
+        bProfil.setOnAction(e -> { Theme.setActiveNav(bProfil, navs); setCenter(wrapContent(buildProfil())); });
         bLogout.setOnAction(e -> onLogout.run());
 
+        Theme.setActiveNav(bBeranda, navs); // menu awal yang tersorot
+
         VBox menu = new VBox(4, bBeranda, bUnit, bPenyewa, bBooking, bBayar,
-                bKomplain, bHarga, bPengumuman);
+                bKomplain, bHarga, bPengumuman, bProfil);
         VBox.setVgrow(menu, Priority.ALWAYS);
 
         VBox sidebar = new VBox(brandBox, menu, bLogout);
@@ -126,7 +138,10 @@ public class AdminDashboardView extends BorderPane {
                         + "data penyewa, pemesanan, pembayaran, komplain, harga sewa, dan pengumuman. "
                         + "Apartemen terdiri dari lantai 2\u201320, blok A\u2013M (Studio) dan N\u2013Z (Family)."));
 
-        return new VBox(16, row1, row2, info);
+        return new VBox(16,
+                Theme.banner("Selamat Datang, Admin",
+                        "Kelola unit, penyewa, pembayaran, dan komplain dari satu tempat."),
+                row1, row2, info);
     }
 
     // ---------- PANEL: DATA UNIT ----------
@@ -137,7 +152,7 @@ public class AdminDashboardView extends BorderPane {
         table.getColumns().add(col("Kode Unit", UnitApartemen::getKodeUnit));
         table.getColumns().add(col("Lantai", u -> String.valueOf(u.getLantai())));
         table.getColumns().add(col("Tipe", UnitApartemen::getTipeUnit));
-        table.getColumns().add(col("Status", UnitApartemen::getStatus));
+        table.getColumns().add(Theme.badgeCol("Status", UnitApartemen::getStatus));
         table.getColumns().add(col("Penyewa", u -> u.getPenyewaUsername() == null ? "-" : u.getPenyewaUsername()));
         Theme.styleTable(table);
 
@@ -236,7 +251,7 @@ public class AdminDashboardView extends BorderPane {
         table.getColumns().add(col("Durasi",
                 b -> b.getJumlahDurasi() + " " + b.getDurasiTipe()));
         table.getColumns().add(col("Total", b -> "Rp " + String.format("%,d", b.getTotalHarga())));
-        table.getColumns().add(col("Status", Booking::getStatusPembayaran));
+        table.getColumns().add(Theme.badgeCol("Status", Booking::getStatusPembayaran));
         Theme.styleTable(table);
         return table;
     }
@@ -250,7 +265,7 @@ public class AdminDashboardView extends BorderPane {
         table.getColumns().add(col("Penyewa", Komplain::getUsernamePenyewa));
         table.getColumns().add(col("Unit", Komplain::getKodeUnit));
         table.getColumns().add(col("Isi Komplain", Komplain::getIsiKomplain));
-        table.getColumns().add(col("Status", Komplain::getStatus));
+        table.getColumns().add(Theme.badgeCol("Status", Komplain::getStatus));
         table.getColumns().add(col("Balasan", Komplain::getBalasanAdmin));
         Theme.styleTable(table);
         table.setItems(FXCollections.observableArrayList(dm.getDaftarKomplain()));
@@ -442,6 +457,87 @@ public class AdminDashboardView extends BorderPane {
                 Theme.fieldLabel("Isi Pesan"), txtPesan,
                 kirim, status);
         return Theme.card(box);
+    }
+
+    // ---------- PANEL: PROFIL ----------
+    private Node buildProfil() {
+        headerTitle.setText("Ubah Profil Admin");
+
+        TextField txtNama = profileField(admin.getNama());
+        TextField txtEmail = profileField(admin.getEmail());
+        TextField txtHp = profileField(admin.getNoHp());
+        PasswordField txtPass = new PasswordField();
+        txtPass.setPromptText("Password baru (kosongkan jika tidak diubah)");
+        txtPass.setStyle("-fx-background-radius: 8; -fx-border-color: " + Theme.BORDER
+                + "; -fx-border-radius: 8; -fx-padding: 9;");
+
+        Label status = new Label();
+        status.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        status.setWrapText(true);
+
+        Button simpan = Theme.primaryButton("Simpan Perubahan");
+        simpan.setOnAction(e -> {
+            String nama = txtNama.getText().trim();
+            String email = txtEmail.getText().trim();
+            String hp = txtHp.getText().trim();
+            String pass = txtPass.getText().trim();
+
+            if (nama.isEmpty() || email.isEmpty() || hp.isEmpty()) {
+                status.setStyle("-fx-text-fill: " + Theme.DANGER + ";");
+                status.setText("Nama, email, dan no. HP tidak boleh kosong.");
+                return;
+            }
+            if (!email.contains("@") || !email.contains(".")) {
+                status.setStyle("-fx-text-fill: " + Theme.DANGER + ";");
+                status.setText("Format email tidak valid.");
+                return;
+            }
+            if (!hp.matches("\\d{10,13}")) {
+                status.setStyle("-fx-text-fill: " + Theme.DANGER + ";");
+                status.setText("No. HP harus 10\u201313 digit angka.");
+                return;
+            }
+            if (!pass.isEmpty() && pass.length() < 6) {
+                status.setStyle("-fx-text-fill: " + Theme.DANGER + ";");
+                status.setText("Password baru minimal 6 karakter.");
+                return;
+            }
+
+            admin.setNama(nama);
+            admin.setEmail(email);
+            admin.setNoHp(hp);
+            if (!pass.isEmpty()) admin.setPassword(pass);
+            dm.updateAdmin(admin);
+
+            status.setStyle("-fx-text-fill: " + Theme.SUCCESS + ";");
+            status.setText("Profil berhasil diperbarui.");
+        });
+
+        GridPane grid = new GridPane();
+        grid.setHgap(14);
+        grid.setVgap(12);
+        grid.add(Theme.fieldLabel("Username"), 0, 0);
+        Label uname = new Label(admin.getUsername());
+        uname.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        uname.setStyle("-fx-text-fill: " + Theme.TEXT_MUTED + ";");
+        grid.add(uname, 1, 0);
+        grid.add(Theme.fieldLabel("Nama"), 0, 1);     grid.add(txtNama, 1, 1);
+        grid.add(Theme.fieldLabel("Email"), 0, 2);    grid.add(txtEmail, 1, 2);
+        grid.add(Theme.fieldLabel("No. HP"), 0, 3);   grid.add(txtHp, 1, 3);
+        grid.add(Theme.fieldLabel("Password"), 0, 4); grid.add(txtPass, 1, 4);
+        grid.add(simpan, 1, 5);
+
+        return Theme.card(
+                Theme.muted("Username tidak dapat diubah. Perubahan tersimpan permanen."),
+                grid, status);
+    }
+
+    private TextField profileField(String value) {
+        TextField tf = new TextField(value == null ? "" : value);
+        tf.setPrefWidth(280);
+        tf.setStyle("-fx-background-radius: 8; -fx-border-color: " + Theme.BORDER
+                + "; -fx-border-radius: 8; -fx-padding: 9;");
+        return tf;
     }
 
     // ---------- UTIL ----------
