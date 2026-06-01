@@ -104,8 +104,8 @@ ApartEase/
 
 ```
 ┌──────────────┐      ┌──────────────┐      ┌──────────┐      ┌──────────┐
-│   View       │ ──── │ DataManager  │ ──── │   DAO    │ ──── │ SQLite   │
-│  (JavaFX)    │ ──── │  (jembatan)  │ ──── │ (5 kelas)│ ──── │ .db file │
+│   View       │ ───> │ DataManager  │ ───> │   DAO    │ ───> │ SQLite   │
+│  (JavaFX)    │ <─── │  (jembatan)  │ <─── │ (5 kelas)│ <─── │ .db file │
 └──────────────┘      └──────────────┘      └──────────┘      └──────────┘
    Pengguna           Cache memori +         Operasi SQL       Persisten
    klik tombol        write-through ke DB    per entitas       di disk
