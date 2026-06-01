@@ -152,7 +152,7 @@ public class PenyewaDashboardView extends BorderPane {
             String sl = txtLantai.getText().trim();
             String sh = txtHuruf.getText().trim().toUpperCase();
             if (!sl.matches("\\d+") || sh.length() != 1 || sh.charAt(0) < 'A' || sh.charAt(0) > 'Z') {
-                hasil.getChildren().add(errLabel("Masukkan lantai berupa angka dan blok satu huruf A-Z."));
+                hasil.getChildren().add(errLabel("Masukkan lantai berupa angka 2-20 dan blok satu huruf A-Z."));
                 return;
             }
             int lantai = Integer.parseInt(sl);
@@ -240,7 +240,7 @@ public class PenyewaDashboardView extends BorderPane {
             setErr(res, "Semua kolom wajib diisi."); return;
         }
         if (!sl.matches("\\d+") || !sj.matches("\\d+")) {
-            setErr(res, "Lantai dan jumlah durasi harus berupa angka."); return;
+            setErr(res, "Lantai harus berupa angka 2-20, blok huruf harus satu huruf A-Z, dan jumlah durasi harus berupa angka."); return;
         }
         int lantai = Integer.parseInt(sl);
         int jumlah = Integer.parseInt(sj);

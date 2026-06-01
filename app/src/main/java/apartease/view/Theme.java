@@ -43,7 +43,7 @@ public final class Theme {
     public static final String APP_BG       = "#b1d4f7ff"; // Abu sangat muda
     public static final String CARD_BG      = "#effe9dff";
     public static final String TEXT_DARK    = "#32322bff";
-    public static final String TEXT_MUTED   = "#867a00ff"; //ubah
+    public static final String TEXT_MUTED   = "#867a00ff"; //ubah 
     public static final String SUCCESS      = "#16A34A"; // Hijau
     public static final String DANGER       = "#DC2626"; // Merah
     public static final String WARNING      = "#D97706"; // Oranye
