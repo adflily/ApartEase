@@ -3,6 +3,7 @@ package apartease.view;
 import apartease.model.Admin;
 import apartease.model.DataManager;
 import apartease.model.Penyewa;
+import apartease.model.Validator;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -103,8 +104,8 @@ public class MainView extends Application {
         PasswordField txtPass = new PasswordField();
         txtPass.setPromptText("Password (min. 6 karakter)");
         styleInput(txtPass);
-        TextField txtEmail = field("Email (contoh@domain.com)");
-        TextField txtHp    = field("No. HP (angka saja)");
+        TextField txtEmail = field("Email (contoh@gmail.com)");
+        TextField txtHp    = field("No. HP (11\u201312 digit angka)");
 
         Label info = new Label();
         info.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
@@ -128,11 +129,11 @@ public class MainView extends Application {
                 err(info, "Semua kolom wajib diisi."); return;
             }
             if (pass.length() < 6) { err(info, "Password minimal 6 karakter."); return; }
-            if (!email.contains("@") || !email.contains(".")) {
-                err(info, "Format email tidak valid."); return;
+            if (!Validator.emailValid(email)) {
+                err(info, "Email harus berformat @gmail.com."); return;
             }
-            if (!hp.matches("\\d{10,13}")) {
-                err(info, "No. HP harus 10\u201313 digit angka."); return;
+            if (!Validator.noHpValid(hp)) {
+                err(info, "No. HP harus 11\u201312 digit angka."); return;
             }
             if (dm.usernamePenyewaSudahAda(user)) {
                 err(info, "Username sudah digunakan."); return;
